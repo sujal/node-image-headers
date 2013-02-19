@@ -21,9 +21,11 @@
   } ],
   "main": "./lib/image_headers",
   "dependencies": {
+    "node-exif": "git://github.com/sujal/node-exif.git"
   },
   "devDependencies": {
         "coffee-script": "*"
+      , "buffered-reader": "*"
       , "mocha": "*"
       , "should": "*"
   },

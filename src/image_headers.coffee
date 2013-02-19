@@ -3,7 +3,172 @@
 # Copyright: 2013 Sujal Shah
 # Author: Sujal Shah
 
+MAX_SIZE = 10000000
+
+exif = require('exif')
+
 class ImageHeaders
+  @modes:
+    jpeg: "jpeg"
+    gif: "gif"
+    tiff: "tiff"
+    png: "png"
+  @orientations:
+    landscape: "landscape"
+    portrait: "portrait"
+  constructor: () ->
+    @finished = false
+    @buffer = new Buffer(MAX_SIZE)
+    @exif_buffer = null
+    @exif_offset = 0
+    @exif_bytes = 0
+    @mode = null
+    @buffer_index = 0
+    @stream_index = 0
+    @marker = 0
+    @marker_offset = 0
+    @marker_size = 0
+    @height = null
+    @width = null
+    @exif_orientation = null
+    @final_orientation = null
+
+
+  add_bytes: (bytes) ->
+    return if this.finished == true
+    if (@buffer_index >= MAX_SIZE)
+      # console.log @buffer
+      this.finished = true
+      return
+
+    bytes = [bytes] if (typeof(bytes) == "number")
+
+    for b in bytes
+      if (@exif_bytes == 0)
+        @buffer[@buffer_index] = b
+        @route_byte(b)
+        @buffer_index++
+      else
+        @exif_buffer.writeUInt8(b, @exif_offset)
+        @exif_offset++
+        @exif_bytes--
+      @stream_index++
+
+  finish: (callback) ->
+    local_this = this
+    if (@exif_buffer? && @exif_buffer.toString("utf-8", 0, 4) == "Exif")
+      # console.log @exif_buffer.length
+      new exif.ExifImage {exif_buffer: @exif_buffer}, (err, exif_data) ->
+
+        if (exif_data? && exif_data.image?)
+          orientation_tag = exif_data.image.filter (tag) ->
+            return tag.tagName == "Orientation"
+
+          if (orientation_tag.length == 1)
+            local_this.orientation = orientation_tag[0].value
+            if (local_this.orientation == 6 || local_this.orientation == 8)
+              temp_w = local_this.width
+              local_this.width = local_this.height
+              local_this.height = temp_w
+
+
+        local_this.exif_data = exif_data
+        return callback(err, local_this)
+
+  route_byte: (b) ->
+    switch @mode
+      when ImageHeaders.modes.jpeg
+        @check_jpeg_state(b,@buffer_index)
+      when ImageHeaders.modes.gif
+        @check_gif_state(b,@buffer_index)
+      when ImageHeaders.modes.tiff
+        @check_tiff_state(b,@buffer_index)
+      when ImageHeaders.modes.png
+        @check_png_state(b,@buffer_index)
+      else
+        @identify_format(b)
+
+  check_jpeg_state: (b, i) ->
+    # console.log "#{@marker_section_offset} #{b}"
+    # console.log("#{b} #{@marker}")
+    if (@marker == 0 && b == 255)
+      # marker on
+      @marker = b
+      return
+    else if @marker == 255
+      # we have a marker!
+      # console.log "Marker is #{b} - #{@stream_index}(#{@buffer_index})" if b != 0
+
+      switch b
+        when 0x00, 0x01, 0xD0, 0xD1, 0xD2, 0xD3, 0xD4, 0xD5, 0xD6, 0xD7, 0xD8, 0xD9, 0xFF
+          @clear_marker() # reset because we ain't got nothing interesting here.
+          return
+        else
+          @marker = b
+          @marker_offset = i
+          @marker_size = 0
+
+    # after here, marker isn't 0xFF, and we should be in a valid state
+
+    # check for SOS
+    if (@marker == 0xDA && @marker_offset - i == 0)
+      # console.log "SOS marker at #{@stream_index}"
+      return
+
+    position = i - @marker_offset
+    if (position == 2)
+      # we're getting a length
+      length = @buffer.readUInt16BE(@marker_offset+1)
+      @marker_size = length
+      switch @marker
+        when 0xE1 #EXIF
+          if (!@exif_buffer?)
+            @exif_bytes = @marker_size-2 #lenght includes the 2 bytes already read in
+            @exif_buffer = new Buffer(@exif_bytes)
+            # console.log "EXIF BYTES #{@exif_bytes}"
+            @clear_marker()
+
+    else
+      if (@marker_size > 0 && position == @marker_size)
+
+        # done reading marker - process it
+        switch @marker
+          when 0xC0,0xC1,0xC2,0xC3,0xC5,0xC6,0xC7,0xC9,0xCA,0xCB,0xCD,0xCE,0xCF
+            @parse_jpeg_sofn()
+
+        @clear_marker()
+
+  identify_format: (b) ->
+    if (@stream_index == 1)
+      if (@buffer[0] == 0xFF && @buffer[1] == 0xD8)
+        @mode = ImageHeaders.modes.jpeg
+
+    # failsafe - if we haven't ID'd the file in 10 bytes, abort
+    if (@stream_index > 10)
+      @finished = true
+      return
+
+    if (@mode?)
+      # replay
+      for i in [0..@stream_index]
+        @route_byte(@buffer[i], i)
+
+  clear_marker: () ->
+    @marker = 0
+    @marker_offset = 0
+    @marker_size = 0
+
+  parse_jpeg_sofn: () ->
+    @height = @buffer.readUInt16BE(@marker_offset+4)
+    @width = @buffer.readUInt16BE(@marker_offset+6)
+
+
+
+
+
+
+
+
 
 
 
