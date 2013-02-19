@@ -25,9 +25,14 @@ class ImageHeaders
     @mode = null
     @buffer_index = 0
     @stream_index = 0
-    @marker = 0
-    @marker_offset = 0
-    @marker_size = 0
+    @jpeg = {
+      marker: 0
+      marker_offset: 0
+      marker_size: 0
+    }
+    @png = {
+      lpos: 0
+    }
     @height = null
     @width = null
     @exif_orientation = null
@@ -89,13 +94,13 @@ class ImageHeaders
         @identify_format(b)
 
   check_jpeg_state: (b, i) ->
-    # console.log "#{@marker_section_offset} #{b}"
-    # console.log("#{b} #{@marker}")
-    if (@marker == 0 && b == 255)
+    # console.log "#{@jpeg.marker_section_offset} #{b}"
+    # console.log("#{b} #{@jpeg.marker}")
+    if (@jpeg.marker == 0 && b == 255)
       # marker on
-      @marker = b
+      @jpeg.marker = b
       return
-    else if @marker == 255
+    else if @jpeg.marker == 255
       # we have a marker!
       # console.log "Marker is #{b} - #{@stream_index}(#{@buffer_index})" if b != 0
 
@@ -104,44 +109,63 @@ class ImageHeaders
           @clear_marker() # reset because we ain't got nothing interesting here.
           return
         else
-          @marker = b
-          @marker_offset = i
-          @marker_size = 0
+          @jpeg.marker = b
+          @jpeg.marker_offset = i
+          @jpeg.marker_size = 0
 
     # after here, marker isn't 0xFF, and we should be in a valid state
 
     # check for SOS
-    if (@marker == 0xDA && @marker_offset - i == 0)
+    if (@jpeg.marker == 0xDA && @jpeg.marker_offset - i == 0)
       # console.log "SOS marker at #{@stream_index}"
       return
 
-    position = i - @marker_offset
+    position = i - @jpeg.marker_offset
     if (position == 2)
       # we're getting a length
-      length = @buffer.readUInt16BE(@marker_offset+1)
-      @marker_size = length
-      switch @marker
+      length = @buffer.readUInt16BE(@jpeg.marker_offset+1)
+      @jpeg.marker_size = length
+      switch @jpeg.marker
         when 0xE1 #EXIF
           if (!@exif_buffer?)
-            @exif_bytes = @marker_size-2 #lenght includes the 2 bytes already read in
+            @exif_bytes = @jpeg.marker_size-2 #lenght includes the 2 bytes already read in
             @exif_buffer = new Buffer(@exif_bytes)
             # console.log "EXIF BYTES #{@exif_bytes}"
             @clear_marker()
 
     else
-      if (@marker_size > 0 && position == @marker_size)
+      if (@jpeg.marker_size > 0 && position == @jpeg.marker_size)
 
         # done reading marker - process it
-        switch @marker
+        switch @jpeg.marker
           when 0xC0,0xC1,0xC2,0xC3,0xC5,0xC6,0xC7,0xC9,0xCA,0xCB,0xCD,0xCE,0xCF
             @parse_jpeg_sofn()
 
         @clear_marker()
 
+  check_gif_state: (b, i) ->
+
+  check_png_state: (b, i) ->
+    return if i < 8 # if we're still in the PNG magic number
+
+
+  check_tiff_state: (b, i) ->
+
+
+
   identify_format: (b) ->
     if (@stream_index == 1)
       if (@buffer[0] == 0xFF && @buffer[1] == 0xD8)
         @mode = ImageHeaders.modes.jpeg
+    else if (@stream_index == 2)
+      buf_as_string = @buffer.toString("utf8", 0, 3)
+      if (buf_as_string == "GIF")
+        @mode = ImageHeaders.modes.gif
+      else if (buf_as_string == "II*" || buf_as_string == "MM*")
+        @mode = ImageHeaders.modes.tiff
+    else if (@stream_index == 7)
+      if (@buffer.toString("hex", 0, 8) == "89504e470d0a1a0a") # this is the signature for PNG - \211PNG\r\n\032\n
+        @mode = ImageHeaders.modes.png
 
     # failsafe - if we haven't ID'd the file in 10 bytes, abort
     if (@stream_index > 10)
@@ -154,13 +178,13 @@ class ImageHeaders
         @route_byte(@buffer[i], i)
 
   clear_marker: () ->
-    @marker = 0
-    @marker_offset = 0
-    @marker_size = 0
+    @jpeg.marker = 0
+    @jpeg.marker_offset = 0
+    @jpeg.marker_size = 0
 
   parse_jpeg_sofn: () ->
-    @height = @buffer.readUInt16BE(@marker_offset+4)
-    @width = @buffer.readUInt16BE(@marker_offset+6)
+    @height = @buffer.readUInt16BE(@jpeg.marker_offset+4)
+    @width = @buffer.readUInt16BE(@jpeg.marker_offset+6)
 
 
 
