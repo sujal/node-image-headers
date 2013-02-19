@@ -42,6 +42,12 @@ in the future anything similar that can benefit from an external library). This
 keeps our code simpler from having us stream and parse EXIF on the fly. No library
 does this well, as far as I can find.
 
+## TODO
+
+- performance and general cleanup. This was a weekend hack (really a 24 hour one) and it shows.
+- clean up internals and exposed data structures. Right now, it's all properties on the object.
+- add support for additional metadata, including GPS and Camera model, as top level features
+
 ## License
 
 See the LICENSE file for details, but short version: MIT License.
