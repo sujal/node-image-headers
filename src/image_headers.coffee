@@ -150,6 +150,11 @@ class ImageHeaders
         @clear_jpeg_marker()
 
   check_gif_state: (b, i) ->
+    if (i == 10)
+      # console.log @buffer.toString("hex", 0, 10)
+      @width = @buffer.readUInt16LE(6)
+      @height = @buffer.readUInt16LE(8)
+      @finished = true
 
   check_png_state: (b, i) ->
     # console.log b if (i < 8)
@@ -183,6 +188,10 @@ class ImageHeaders
         @clear_png_marker()
 
   check_tiff_state: (b, i) ->
+    # unsupported for now... probably can hand this to EXIF code, eventually :-/
+    @height = 0
+    @width = 0
+    @finished = true
 
 
 
