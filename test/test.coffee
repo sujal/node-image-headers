@@ -81,3 +81,16 @@ describe "ImageHeaders", () ->
       image_headers.width.should.eql(3264)
       image_headers.height.should.eql(2448)
       done()
+
+  it "should give me the size of a PNG", (done) ->
+    read_file "test/samples/F.png", (err, image_headers) ->
+      should.not.exist(err)
+      should.exist(image_headers)
+      should.exist(image_headers.mode)
+      image_headers.mode.should.eql(ImageHeaders.modes.png)
+      should.not.exist(image_headers.exif_data)
+      should.exist(image_headers.width)
+      should.exist(image_headers.height)
+      image_headers.width.should.eql(1600)
+      image_headers.height.should.eql(1600)
+      done()

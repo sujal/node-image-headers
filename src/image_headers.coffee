@@ -31,7 +31,8 @@ class ImageHeaders
       marker_size: 0
     }
     @png = {
-      lpos: 0
+      start: 0
+      length: 0
     }
     @height = null
     @width = null
@@ -61,24 +62,28 @@ class ImageHeaders
 
   finish: (callback) ->
     local_this = this
-    if (@exif_buffer? && @exif_buffer.toString("utf-8", 0, 4) == "Exif")
-      # console.log @exif_buffer.length
-      new exif.ExifImage {exif_buffer: @exif_buffer}, (err, exif_data) ->
+    if (@mode == ImageHeaders.modes.jpeg)
+      if (@exif_buffer? && @exif_buffer.toString("utf-8", 0, 4) == "Exif")
+        # console.log @exif_buffer.length
+        new exif.ExifImage {exif_buffer: @exif_buffer}, (err, exif_data) ->
 
-        if (exif_data? && exif_data.image?)
-          orientation_tag = exif_data.image.filter (tag) ->
-            return tag.tagName == "Orientation"
+          if (exif_data? && exif_data.image?)
+            orientation_tag = exif_data.image.filter (tag) ->
+              return tag.tagName == "Orientation"
 
-          if (orientation_tag.length == 1)
-            local_this.orientation = orientation_tag[0].value
-            if (local_this.orientation == 6 || local_this.orientation == 8)
-              temp_w = local_this.width
-              local_this.width = local_this.height
-              local_this.height = temp_w
+            if (orientation_tag.length == 1)
+              local_this.orientation = orientation_tag[0].value
+              if (local_this.orientation == 6 || local_this.orientation == 8)
+                temp_w = local_this.width
+                local_this.width = local_this.height
+                local_this.height = temp_w
 
 
-        local_this.exif_data = exif_data
-        return callback(err, local_this)
+          local_this.exif_data = exif_data
+          return callback(err, local_this)
+    else
+      return callback(null, local_this)
+
 
   route_byte: (b) ->
     switch @mode
@@ -106,7 +111,7 @@ class ImageHeaders
 
       switch b
         when 0x00, 0x01, 0xD0, 0xD1, 0xD2, 0xD3, 0xD4, 0xD5, 0xD6, 0xD7, 0xD8, 0xD9, 0xFF
-          @clear_marker() # reset because we ain't got nothing interesting here.
+          @clear_jpeg_marker() # reset because we ain't got nothing interesting here.
           return
         else
           @jpeg.marker = b
@@ -118,6 +123,7 @@ class ImageHeaders
     # check for SOS
     if (@jpeg.marker == 0xDA && @jpeg.marker_offset - i == 0)
       # console.log "SOS marker at #{@stream_index}"
+      @finished = true
       return
 
     position = i - @jpeg.marker_offset
@@ -131,7 +137,7 @@ class ImageHeaders
             @exif_bytes = @jpeg.marker_size-2 #lenght includes the 2 bytes already read in
             @exif_buffer = new Buffer(@exif_bytes)
             # console.log "EXIF BYTES #{@exif_bytes}"
-            @clear_marker()
+            @clear_jpeg_marker()
 
     else
       if (@jpeg.marker_size > 0 && position == @jpeg.marker_size)
@@ -141,13 +147,40 @@ class ImageHeaders
           when 0xC0,0xC1,0xC2,0xC3,0xC5,0xC6,0xC7,0xC9,0xCA,0xCB,0xCD,0xCE,0xCF
             @parse_jpeg_sofn()
 
-        @clear_marker()
+        @clear_jpeg_marker()
 
   check_gif_state: (b, i) ->
 
   check_png_state: (b, i) ->
+    # console.log b if (i < 8)
     return if i < 8 # if we're still in the PNG magic number
+    if (@png.start == 0)
+      @png.start = i
+      # console.log "starting chunk: #{@png.start}"
+      return 0
 
+    offset = i-@png.start
+    # if (offset < 3)
+      # console.log "---"
+
+    switch offset
+      when 3
+        # we have a length
+        length = @buffer.readUInt32BE(@png.start)
+        @png.length = length
+        # console.log "chunk length: #{length}"
+      when 7
+        # we have a chunk!
+        @png.marker = @buffer.toString("utf8", @png.start+4, @png.start+8)
+        # console.log "chunk marker: #{@png.marker}"
+      when @png.length+8
+        if @png.marker == "IHDR"
+          # console.log @buffer.toString("hex", @png.start+8, @png.start+8+@png.length)
+          @width = @buffer.readUInt32BE(@png.start+8)
+          @height = @buffer.readUInt32BE(@png.start+12)
+          @finished = true
+      when @png.length+12
+        @clear_png_marker()
 
   check_tiff_state: (b, i) ->
 
@@ -177,7 +210,8 @@ class ImageHeaders
       for i in [0..@stream_index]
         @route_byte(@buffer[i], i)
 
-  clear_marker: () ->
+  # JPEG SUPPORT
+  clear_jpeg_marker: () ->
     @jpeg.marker = 0
     @jpeg.marker_offset = 0
     @jpeg.marker_size = 0
@@ -185,6 +219,12 @@ class ImageHeaders
   parse_jpeg_sofn: () ->
     @height = @buffer.readUInt16BE(@jpeg.marker_offset+4)
     @width = @buffer.readUInt16BE(@jpeg.marker_offset+6)
+
+  # PNG SUPPORT
+  clear_png_marker: () ->
+    @png.start = 0
+    @png.length = 0
+    @png.marker = null
 
 
 
