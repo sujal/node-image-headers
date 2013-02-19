@@ -1,0 +1,6 @@
+.git*
+notes/
+test/
+src/
+Makefile
+.DS_Store
