@@ -4,3 +4,4 @@ test/
 src/
 Makefile
 .DS_Store
+*sublime*
