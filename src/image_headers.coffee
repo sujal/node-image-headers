@@ -79,8 +79,10 @@ class ImageHeaders
                 local_this.height = temp_w
 
 
-          local_this.exif_data = exif_data
+            local_this.exif_data = exif_data
           return callback(err, local_this)
+      else
+        return
     else
       return callback(null, local_this)
 
