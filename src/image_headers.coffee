@@ -66,7 +66,6 @@ class ImageHeaders
       if (@exif_buffer? && @exif_buffer.toString("utf-8", 0, 4) == "Exif")
         # console.log @exif_buffer.length
         new exif.ExifImage {exif_buffer: @exif_buffer}, (err, exif_data) ->
-
           if (exif_data? && exif_data.image?)
             orientation_tag = exif_data.image.filter (tag) ->
               return tag.tagName == "Orientation"
