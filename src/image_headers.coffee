@@ -82,7 +82,7 @@ class ImageHeaders
             local_this.exif_data = exif_data
           return callback(err, local_this)
       else
-        return
+        return callback(null, local_this)
     else
       return callback(null, local_this)
 
