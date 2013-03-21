@@ -13,7 +13,7 @@ hit that goal and still get our metadata.
 ## Usage
 
 ````
-npm install node-image-headers
+npm install image-headers
 ````
 
 See the test file for how we are using it. Here's the key snippet:
