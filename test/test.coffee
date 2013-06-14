@@ -85,6 +85,7 @@ describe "ImageHeaders", () ->
   it "should give me the size of the oddball JPG ", (done) ->
     read_file "test/samples/oddball.jpg", (err, image_headers) ->
       should.not.exist(err)
+      # console.log image_headers
       should.exist(image_headers)
       should.exist(image_headers.mode)
       image_headers.mode.should.eql(ImageHeaders.modes.jpeg)
@@ -93,6 +94,17 @@ describe "ImageHeaders", () ->
       should.exist(image_headers.exif_data)
       done()
 
+  it "should give me the size of the oddball2 JPG ", (done) ->
+    read_file "test/samples/oddball2.jpg", (err, image_headers) ->
+      should.not.exist(err)
+      # console.log image_headers
+      should.exist(image_headers)
+      should.exist(image_headers.mode)
+      image_headers.mode.should.eql(ImageHeaders.modes.jpeg)
+      image_headers.width.should.eql(275)
+      image_headers.height.should.eql(251)
+      # should.exist(image_headers.exif_data)
+      done()
 
 
   it "should give me the size of a PNG", (done) ->

@@ -3,7 +3,7 @@
 # Copyright: 2013 Sujal Shah
 # Author: Sujal Shah
 
-INITIAL_BUFFER_MAX_SIZE = 131072
+MAX_SIZE = 131072
 
 exif = require('exif')
 
@@ -18,8 +18,7 @@ class ImageHeaders
     portrait: "portrait"
   constructor: () ->
     @finished = false
-    @buffer = new Buffer(INITIAL_BUFFER_MAX_SIZE)
-    @jpeg_buffer = null
+    @buffer = new Buffer(MAX_SIZE)
     @exif_buffer = null
     @exif_offset = 0
     @exif_bytes = 0
@@ -43,18 +42,12 @@ class ImageHeaders
 
   add_bytes: (bytes) ->
     return if this.finished == true
-    if (@buffer_index >= INITIAL_BUFFER_MAX_SIZE)
-      # console.log @buffer
-      this.finished = true
-      return
 
     bytes = [bytes] if (typeof(bytes) == "number")
 
     for b in bytes
       if (@exif_bytes == 0)
-        @buffer[@buffer_index] = b
         @route_byte(b)
-        @buffer_index++
       else
         @exif_buffer.writeUInt8(b, @exif_offset)
         @exif_offset++
@@ -87,27 +80,42 @@ class ImageHeaders
       return callback(null, local_this)
 
 
+  # The various check_* methods here and identify_format are
+  # responsible for tracking the buffer state.
   route_byte: (b) ->
     switch @mode
       when ImageHeaders.modes.jpeg
-        @check_jpeg_state(b,@buffer_index)
+        @check_jpeg_state(b)
       when ImageHeaders.modes.gif
-        @check_gif_state(b,@buffer_index)
+        @check_gif_state(b)
       when ImageHeaders.modes.tiff
-        @check_tiff_state(b,@buffer_index)
+        @check_tiff_state(b)
       when ImageHeaders.modes.png
-        @check_png_state(b,@buffer_index)
+        @check_png_state(b)
       else
         @identify_format(b)
 
-  check_jpeg_state: (b, i) ->
+  check_jpeg_state: (b) ->
     # console.log "#{@jpeg.marker_section_offset} #{b}"
     # console.log("#{b} #{@jpeg.marker}")
+
+    # check if we're in a marker section.
+    # if the marker is 0, and this isn't the first byte
+    # of a marker, we're not in a valid state
+    # console.log "#{@jpeg.marker} #{b}"
+    if (@jpeg.marker == 0 && b != 255)
+      return
+
+    # if our buffer is full, give up only on this segment
+    if (@buffer_index >= @buffer.length)
+      @clear_jpeg_marker
+      return
+
+    i = @buffer_index
+    @buffer[@buffer_index] = b
+    @buffer_index++
+
     if (@jpeg.marker == 0 && b == 255)
-      @buffer_index = 0
-      @buffer.slice()
-      i = 0
-      @buffer[0] = b
       # marker on
       @jpeg.marker = b
       return
@@ -123,13 +131,6 @@ class ImageHeaders
           @jpeg.marker = b
           @jpeg.marker_offset = i
           @jpeg.marker_size = 0
-    else if (@jpeg.marker == 0)
-      @buffer_index = 0
-      i = 0
-      @buffer.slice()
-      @buffer[0] = b
-      # marker on
-      @jpeg.marker = b
 
 
     # after here, marker isn't 0xFF, and we should be in a valid state
@@ -143,12 +144,6 @@ class ImageHeaders
     position = i - @jpeg.marker_offset
     if (position == 2)
       # we're getting a length
-      unless (@buffer.length > @jpeg.marker_offset+2)
-        @finished = true
-        @clear_jpeg_marker()
-        console.log "Aborting parse at #{@jpeg.marker_offset} #{@jpeg.marker} #{@buffer.length}"
-        return
-
       length = @buffer.readUInt16BE(@jpeg.marker_offset+1)
       @jpeg.marker_size = length
       switch @jpeg.marker
@@ -169,15 +164,25 @@ class ImageHeaders
 
         @clear_jpeg_marker()
 
-  check_gif_state: (b, i) ->
+  check_gif_state: (b) ->
+
+    i = @buffer_index
+    @buffer[@buffer_index] = b
+    @buffer_index++
+
     if (i == 10)
       # console.log @buffer.toString("hex", 0, 10)
       @width = @buffer.readUInt16LE(6)
       @height = @buffer.readUInt16LE(8)
       @finished = true
 
-  check_png_state: (b, i) ->
+  check_png_state: (b) ->
     # console.log b if (i < 8)
+
+    i = @buffer_index
+    @buffer[@buffer_index] = b
+    @buffer_index++
+
     return if i < 8 # if we're still in the PNG magic number
     if (@png.start == 0)
       @png.start = i
@@ -216,6 +221,11 @@ class ImageHeaders
 
 
   identify_format: (b) ->
+
+    i = @buffer_index
+    @buffer[@buffer_index] = b
+    @buffer_index++
+
     if (@stream_index == 1)
       if (@buffer[0] == 0xFF && @buffer[1] == 0xD8)
         @mode = ImageHeaders.modes.jpeg
@@ -236,21 +246,30 @@ class ImageHeaders
 
     if (@mode?)
       # replay
+
+      temp_buffer = new Buffer(@stream_index+1)
+      @buffer.copy(temp_buffer, 0, 0, @stream_index+1)
+
+      @reset_buffer_data()
+
       for i in [0..@stream_index]
-        @route_byte(@buffer[i], i)
+        @route_byte(temp_buffer[i], i)
+
+  reset_buffer_data: () ->
+    @buffer_index = 0
+    @buffer.slice()
+
 
   # JPEG SUPPORT
   clear_jpeg_marker: () ->
+    @reset_buffer_data()
     @jpeg.marker = 0
     @jpeg.marker_offset = 0
     @jpeg.marker_size = 0
-    @buffer_index = 0
-    @buffer.slice()
 
   parse_jpeg_sofn: () ->
     @height = @buffer.readUInt16BE(@jpeg.marker_offset+4)
     @width = @buffer.readUInt16BE(@jpeg.marker_offset+6)
-    # console.log @jpeg.marker_offset
 
   # PNG SUPPORT
   clear_png_marker: () ->
