@@ -103,6 +103,7 @@ describe "ImageHeaders", () ->
       image_headers.mode.should.eql(ImageHeaders.modes.jpeg)
       image_headers.width.should.eql(275)
       image_headers.height.should.eql(251)
+      image_headers.should.have.property("buffer").eql(null)
       # should.exist(image_headers.exif_data)
       done()
 

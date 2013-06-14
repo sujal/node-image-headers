@@ -138,7 +138,8 @@ class ImageHeaders
     # check for SOS
     if (@jpeg.marker == 0xDA && @jpeg.marker_offset - i == 0)
       # console.log "SOS marker at #{@stream_index}"
-      @finished = true
+      @clear_jpeg_marker()
+      @end_parsing()
       return
 
     position = i - @jpeg.marker_offset
@@ -174,7 +175,7 @@ class ImageHeaders
       # console.log @buffer.toString("hex", 0, 10)
       @width = @buffer.readUInt16LE(6)
       @height = @buffer.readUInt16LE(8)
-      @finished = true
+      @end_parsing()
 
   check_png_state: (b) ->
     # console.log b if (i < 8)
@@ -208,7 +209,7 @@ class ImageHeaders
           # console.log @buffer.toString("hex", @png.start+8, @png.start+8+@png.length)
           @width = @buffer.readUInt32BE(@png.start+8)
           @height = @buffer.readUInt32BE(@png.start+12)
-          @finished = true
+          @end_parsing()
       when @png.length+12
         @clear_png_marker()
 
@@ -216,7 +217,7 @@ class ImageHeaders
     # unsupported for now... probably can hand this to EXIF code, eventually :-/
     @height = 0
     @width = 0
-    @finished = true
+    @end_parsing()
 
 
 
@@ -241,7 +242,7 @@ class ImageHeaders
 
     # failsafe - if we haven't ID'd the file in 10 bytes, abort
     if (@stream_index > 10)
-      @finished = true
+      @end_parsing()
       return
 
     if (@mode?)
@@ -259,6 +260,10 @@ class ImageHeaders
     @buffer_index = 0
     @buffer.slice()
 
+  end_parsing: () ->
+    @reset_buffer_data()
+    @buffer = null
+    @finished = true
 
   # JPEG SUPPORT
   clear_jpeg_marker: () ->
