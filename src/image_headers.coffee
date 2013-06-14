@@ -46,6 +46,8 @@ class ImageHeaders
     bytes = [bytes] if (typeof(bytes) == "number")
 
     for b in bytes
+      # parsing could be terminated mid-chunk!
+      return if this.finished == true
       if (@exif_bytes == 0)
         @route_byte(b)
       else
