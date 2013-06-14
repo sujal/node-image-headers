@@ -130,6 +130,12 @@ class ImageHeaders
     position = i - @jpeg.marker_offset
     if (position == 2)
       # we're getting a length
+      unless (@buffer.length > @jpeg.marker_offset+2)
+        @finished = true
+        @clear_jpeg_marker()
+        console.log "Aborting parse at #{@jpeg.marker_offset} #{@jpeg.marker} #{@buffer.length}"
+        return
+
       length = @buffer.readUInt16BE(@jpeg.marker_offset+1)
       @jpeg.marker_size = length
       switch @jpeg.marker
