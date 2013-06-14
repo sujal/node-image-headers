@@ -3,7 +3,8 @@
 # Copyright: 2013 Sujal Shah
 # Author: Sujal Shah
 
-MAX_SIZE = 131072
+INITIAL_BUFFER_MAX_SIZE = 1024
+METADATA_SECTION_MAX_SIZE = 262144
 
 exif = require('exif')
 
@@ -18,7 +19,8 @@ class ImageHeaders
     portrait: "portrait"
   constructor: () ->
     @finished = false
-    @buffer = new Buffer(MAX_SIZE)
+    @buffer = new Buffer(INITIAL_BUFFER_MAX_SIZE)
+    @jpeg_buffer = null
     @exif_buffer = null
     @exif_offset = 0
     @exif_bytes = 0
@@ -42,7 +44,7 @@ class ImageHeaders
 
   add_bytes: (bytes) ->
     return if this.finished == true
-    if (@buffer_index >= MAX_SIZE)
+    if (@buffer_index >= INITIAL_BUFFER_MAX_SIZE)
       # console.log @buffer
       this.finished = true
       return
@@ -103,6 +105,8 @@ class ImageHeaders
     # console.log "#{@jpeg.marker_section_offset} #{b}"
     # console.log("#{b} #{@jpeg.marker}")
     if (@jpeg.marker == 0 && b == 255)
+      @buffer_index = 0
+      @buffer[0] = b
       # marker on
       @jpeg.marker = b
       return
@@ -231,6 +235,7 @@ class ImageHeaders
     @jpeg.marker = 0
     @jpeg.marker_offset = 0
     @jpeg.marker_size = 0
+    @buffer_index = 0
 
   parse_jpeg_sofn: () ->
     @height = @buffer.readUInt16BE(@jpeg.marker_offset+4)
