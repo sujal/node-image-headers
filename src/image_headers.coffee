@@ -3,8 +3,7 @@
 # Copyright: 2013 Sujal Shah
 # Author: Sujal Shah
 
-INITIAL_BUFFER_MAX_SIZE = 1024
-METADATA_SECTION_MAX_SIZE = 262144
+INITIAL_BUFFER_MAX_SIZE = 131072
 
 exif = require('exif')
 
@@ -106,6 +105,8 @@ class ImageHeaders
     # console.log("#{b} #{@jpeg.marker}")
     if (@jpeg.marker == 0 && b == 255)
       @buffer_index = 0
+      @buffer.slice()
+      i = 0
       @buffer[0] = b
       # marker on
       @jpeg.marker = b
@@ -122,6 +123,14 @@ class ImageHeaders
           @jpeg.marker = b
           @jpeg.marker_offset = i
           @jpeg.marker_size = 0
+    else if (@jpeg.marker == 0)
+      @buffer_index = 0
+      i = 0
+      @buffer.slice()
+      @buffer[0] = b
+      # marker on
+      @jpeg.marker = b
+
 
     # after here, marker isn't 0xFF, and we should be in a valid state
 
@@ -236,10 +245,12 @@ class ImageHeaders
     @jpeg.marker_offset = 0
     @jpeg.marker_size = 0
     @buffer_index = 0
+    @buffer.slice()
 
   parse_jpeg_sofn: () ->
     @height = @buffer.readUInt16BE(@jpeg.marker_offset+4)
     @width = @buffer.readUInt16BE(@jpeg.marker_offset+6)
+    # console.log @jpeg.marker_offset
 
   # PNG SUPPORT
   clear_png_marker: () ->

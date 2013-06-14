@@ -82,6 +82,19 @@ describe "ImageHeaders", () ->
       image_headers.height.should.eql(2448)
       done()
 
+  it "should give me the size of the oddball JPG ", (done) ->
+    read_file "test/samples/oddball.jpg", (err, image_headers) ->
+      should.not.exist(err)
+      should.exist(image_headers)
+      should.exist(image_headers.mode)
+      image_headers.mode.should.eql(ImageHeaders.modes.jpeg)
+      image_headers.width.should.eql(700)
+      image_headers.height.should.eql(1050)
+      should.exist(image_headers.exif_data)
+      done()
+
+
+
   it "should give me the size of a PNG", (done) ->
     read_file "test/samples/F.png", (err, image_headers) ->
       should.not.exist(err)
