@@ -3,7 +3,7 @@
 # Copyright: 2013 Sujal Shah
 # Author: Sujal Shah
 
-MAX_SIZE = 32768
+MAX_SIZE = 131072
 
 exif = require('exif')
 
