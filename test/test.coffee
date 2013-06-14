@@ -107,6 +107,19 @@ describe "ImageHeaders", () ->
       # should.exist(image_headers.exif_data)
       done()
 
+  # this used to complain - making sure it's fine in new code going forward
+  it "should give me the size of the invalid_exif JPG ", (done) ->
+    read_file "test/samples/invalid_exif.jpg", (err, image_headers) ->
+      should.not.exist(err)
+      # console.log image_headers
+      should.exist(image_headers)
+      should.exist(image_headers.mode)
+      image_headers.mode.should.eql(ImageHeaders.modes.jpeg)
+      image_headers.width.should.eql(1281)
+      image_headers.height.should.eql(1753)
+      image_headers.should.have.property("buffer").eql(null)
+      # should.exist(image_headers.exif_data)
+      done()
 
   it "should give me the size of a PNG", (done) ->
     read_file "test/samples/F.png", (err, image_headers) ->

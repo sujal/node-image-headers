@@ -63,15 +63,11 @@ class ImageHeaders
         # console.log @exif_buffer.length
         new exif.ExifImage {exif_buffer: @exif_buffer}, (err, exif_data) ->
           if (exif_data? && exif_data.image?)
-            orientation_tag = exif_data.image.filter (tag) ->
-              return tag.tagName == "Orientation"
-
-            if (orientation_tag.length == 1)
-              local_this.orientation = orientation_tag[0].value
-              if (local_this.orientation == 6 || local_this.orientation == 8)
-                temp_w = local_this.width
-                local_this.width = local_this.height
-                local_this.height = temp_w
+            local_this.orientation = exif_data.image.Orientation
+            if (local_this.orientation == 6 || local_this.orientation == 8)
+              temp_w = local_this.width
+              local_this.width = local_this.height
+              local_this.height = temp_w
 
 
             local_this.exif_data = exif_data
