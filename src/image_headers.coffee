@@ -256,7 +256,8 @@ class ImageHeaders
 
   reset_buffer_data: () ->
     @buffer_index = 0
-    @buffer.slice()
+    if (@buffer?)
+      @buffer.slice()
 
   end_parsing: () ->
     @reset_buffer_data()
