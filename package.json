@@ -1,6 +1,6 @@
 {
   "name": "image-headers",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Parse image headers from a stream without loading the entire image.",
   "keywords": ["exif", "jpeg", "jpg", "gif", "png", "streaming"],
   "repository": {
@@ -21,7 +21,7 @@
   } ],
   "main": "./lib/image_headers",
   "dependencies": {
-    "exif": "git://github.com/sujal/node-exif.git#image-headers-0.3.1"
+    "exif": "git://github.com/sujal/node-exif.git#image-headers-0.3.2"
   },
   "devDependencies": {
         "coffee-script": "*"
