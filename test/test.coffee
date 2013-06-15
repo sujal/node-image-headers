@@ -28,98 +28,113 @@ read_file = (file_name, callback) ->
 
 describe "ImageHeaders", () ->
 
-  it "should give me the size of a JPG w/ exif", (done) ->
-    read_file "test/samples/IMG_9111.JPG", (err, image_headers) ->
-      should.not.exist(err)
-      should.exist(image_headers)
-      should.exist(image_headers.mode)
-      image_headers.mode.should.eql(ImageHeaders.modes.jpeg)
-      image_headers.width.should.eql(3264)
-      image_headers.height.should.eql(2448)
-      should.exist(image_headers.exif_data)
-      done()
+  # it "should give me the size of a JPG w/ exif", (done) ->
+  #   read_file "test/samples/IMG_9111.JPG", (err, image_headers) ->
+  #     should.not.exist(err)
+  #     should.exist(image_headers)
+  #     should.exist(image_headers.mode)
+  #     image_headers.mode.should.eql(ImageHeaders.modes.jpeg)
+  #     image_headers.width.should.eql(3264)
+  #     image_headers.height.should.eql(2448)
+  #     should.exist(image_headers.exif_data)
+  #     done()
 
-  it "should give me the size of a photoshop JPG", (done) ->
-    read_file "test/samples/F.jpg", (err, image_headers) ->
-      should.not.exist(err)
-      should.exist(image_headers)
-      should.exist(image_headers.mode)
-      image_headers.mode.should.eql(ImageHeaders.modes.jpeg)
-      image_headers.width.should.eql(1600)
-      image_headers.height.should.eql(1600)
-      done()
+  # it "should give me the size of a photoshop JPG", (done) ->
+  #   read_file "test/samples/F.jpg", (err, image_headers) ->
+  #     should.not.exist(err)
+  #     should.exist(image_headers)
+  #     should.exist(image_headers.mode)
+  #     image_headers.mode.should.eql(ImageHeaders.modes.jpeg)
+  #     image_headers.width.should.eql(1600)
+  #     image_headers.height.should.eql(1600)
+  #     done()
 
-  it "should give me the size of a JPG w/ exif & rotation (8)", (done) ->
-    read_file "test/samples/IMG_9114.JPG", (err, image_headers) ->
-      should.not.exist(err)
-      should.exist(image_headers)
-      should.exist(image_headers.mode)
-      image_headers.mode.should.eql(ImageHeaders.modes.jpeg)
-      should.exist(image_headers.exif_data)
-      image_headers.width.should.eql(2448)
-      image_headers.height.should.eql(3264)
-      done()
+  # it "should give me the size of a JPG w/ exif & rotation (8)", (done) ->
+  #   read_file "test/samples/IMG_9114.JPG", (err, image_headers) ->
+  #     should.not.exist(err)
+  #     should.exist(image_headers)
+  #     should.exist(image_headers.mode)
+  #     image_headers.mode.should.eql(ImageHeaders.modes.jpeg)
+  #     should.exist(image_headers.exif_data)
+  #     image_headers.width.should.eql(2448)
+  #     image_headers.height.should.eql(3264)
+  #     done()
 
-  it "should give me the size of a JPG w/ exif & rotation (6)", (done) ->
-    read_file "test/samples/IMG_9098.JPG", (err, image_headers) ->
-      should.not.exist(err)
-      should.exist(image_headers)
-      should.exist(image_headers.mode)
-      image_headers.mode.should.eql(ImageHeaders.modes.jpeg)
-      should.exist(image_headers.exif_data)
-      image_headers.width.should.eql(2448)
-      image_headers.height.should.eql(3264)
-      done()
+  # it "should give me the size of a JPG w/ exif & rotation (6)", (done) ->
+  #   read_file "test/samples/IMG_9098.JPG", (err, image_headers) ->
+  #     should.not.exist(err)
+  #     should.exist(image_headers)
+  #     should.exist(image_headers.mode)
+  #     image_headers.mode.should.eql(ImageHeaders.modes.jpeg)
+  #     should.exist(image_headers.exif_data)
+  #     image_headers.width.should.eql(2448)
+  #     image_headers.height.should.eql(3264)
+  #     done()
 
-  it "should give me the size of a JPG w/ exif & rotation (3)", (done) ->
-    read_file "test/samples/IMG_9116.JPG", (err, image_headers) ->
-      should.not.exist(err)
-      should.exist(image_headers)
-      should.exist(image_headers.mode)
-      image_headers.mode.should.eql(ImageHeaders.modes.jpeg)
-      should.exist(image_headers.exif_data)
-      image_headers.width.should.eql(3264)
-      image_headers.height.should.eql(2448)
-      done()
+  # it "should give me the size of a JPG w/ exif & rotation (3)", (done) ->
+  #   read_file "test/samples/IMG_9116.JPG", (err, image_headers) ->
+  #     should.not.exist(err)
+  #     should.exist(image_headers)
+  #     should.exist(image_headers.mode)
+  #     image_headers.mode.should.eql(ImageHeaders.modes.jpeg)
+  #     should.exist(image_headers.exif_data)
+  #     image_headers.width.should.eql(3264)
+  #     image_headers.height.should.eql(2448)
+  #     done()
 
-  it "should give me the size of the oddball JPG ", (done) ->
-    read_file "test/samples/oddball.jpg", (err, image_headers) ->
+  # it "should give me the size of the oddball JPG ", (done) ->
+  #   read_file "test/samples/oddball.jpg", (err, image_headers) ->
+  #     should.not.exist(err)
+  #     # console.log image_headers
+  #     should.exist(image_headers)
+  #     should.exist(image_headers.mode)
+  #     image_headers.mode.should.eql(ImageHeaders.modes.jpeg)
+  #     image_headers.width.should.eql(700)
+  #     image_headers.height.should.eql(1050)
+  #     should.exist(image_headers.exif_data)
+  #     done()
+
+  # it "should give me the size of the oddball2 JPG ", (done) ->
+  #   read_file "test/samples/oddball2.jpg", (err, image_headers) ->
+  #     should.not.exist(err)
+  #     # console.log image_headers
+  #     should.exist(image_headers)
+  #     should.exist(image_headers.mode)
+  #     image_headers.mode.should.eql(ImageHeaders.modes.jpeg)
+  #     image_headers.width.should.eql(275)
+  #     image_headers.height.should.eql(251)
+  #     image_headers.should.have.property("buffer").eql(null)
+  #     # should.exist(image_headers.exif_data)
+  #     done()
+
+  # # this used to complain - making sure it's fine in new code going forward
+  # it "should give me the size of the invalid_exif JPG ", (done) ->
+  #   read_file "test/samples/invalid_exif.jpg", (err, image_headers) ->
+  #     should.not.exist(err)
+  #     # console.log image_headers
+  #     should.exist(image_headers)
+  #     should.exist(image_headers.mode)
+  #     image_headers.mode.should.eql(ImageHeaders.modes.jpeg)
+  #     image_headers.width.should.eql(1281)
+  #     image_headers.height.should.eql(1753)
+  #     image_headers.should.have.property("buffer").eql(null)
+  #     # should.exist(image_headers.exif_data)
+  #     done()
+
+  # this caused a crash in 0.3.0 -
+  it "should give me the size of the crasher JPG ", (done) ->
+    read_file "test/samples/0-3-0-crasher.jpg", (err, image_headers) ->
       should.not.exist(err)
       # console.log image_headers
       should.exist(image_headers)
       should.exist(image_headers.mode)
       image_headers.mode.should.eql(ImageHeaders.modes.jpeg)
-      image_headers.width.should.eql(700)
-      image_headers.height.should.eql(1050)
-      should.exist(image_headers.exif_data)
-      done()
-
-  it "should give me the size of the oddball2 JPG ", (done) ->
-    read_file "test/samples/oddball2.jpg", (err, image_headers) ->
-      should.not.exist(err)
-      # console.log image_headers
-      should.exist(image_headers)
-      should.exist(image_headers.mode)
-      image_headers.mode.should.eql(ImageHeaders.modes.jpeg)
-      image_headers.width.should.eql(275)
-      image_headers.height.should.eql(251)
+      image_headers.width.should.eql(400)
+      image_headers.height.should.eql(600)
       image_headers.should.have.property("buffer").eql(null)
       # should.exist(image_headers.exif_data)
       done()
 
-  # this used to complain - making sure it's fine in new code going forward
-  it "should give me the size of the invalid_exif JPG ", (done) ->
-    read_file "test/samples/invalid_exif.jpg", (err, image_headers) ->
-      should.not.exist(err)
-      # console.log image_headers
-      should.exist(image_headers)
-      should.exist(image_headers.mode)
-      image_headers.mode.should.eql(ImageHeaders.modes.jpeg)
-      image_headers.width.should.eql(1281)
-      image_headers.height.should.eql(1753)
-      image_headers.should.have.property("buffer").eql(null)
-      # should.exist(image_headers.exif_data)
-      done()
 
   it "should give me the size of a PNG", (done) ->
     read_file "test/samples/F.png", (err, image_headers) ->
